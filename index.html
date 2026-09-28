@@ -1,0 +1,335 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kotoba-CommunicationAsobi</title>
+<style>
+:root {
+  font-family: system-ui, sans-serif;
+  color: #243247;
+  background: #f3f6fa;
+}
+body { margin: 0; }
+header {
+  background: #173b68;
+  color: white;
+  padding: 22px;
+  text-align: center;
+}
+header h1 { font-size: 24px; margin: 0 0 8px; }
+header p { margin: 0; font-size: 14px; }
+main { max-width: 900px; margin: auto; padding: 20px; }
+.panel {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 18px;
+  box-shadow: 0 2px 8px #0000000c;
+}
+h2 { font-size: 19px; margin-top: 0; }
+input, select, button {
+  font: inherit;
+  padding: 11px;
+  border-radius: 7px;
+}
+input, select {
+  border: 1px solid #bbc7d5;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+#word { width: 100%; margin-bottom: 12px; }
+.languages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 12px 0 18px;
+}
+.languages label { font-size: 14px; }
+button {
+  cursor: pointer;
+  border: 0;
+  background: #1769aa;
+  color: white;
+}
+button.secondary { background: #e8eef5; color: #243247; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.result {
+  border: 1px solid #dce3ec;
+  border-radius: 9px;
+  padding: 15px;
+  margin: 12px 0;
+}
+.result h3 { margin: 0 0 10px; }
+.foreign { font-size: 25px; font-weight: 700; }
+.muted { color: #637187; font-size: 13px; }
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e4e9ef;
+}
+.card {
+  width: 91mm;
+  height: 55mm;
+  box-sizing: border-box;
+  padding: 5mm;
+  border: 1px solid #ccd4df;
+  border-radius: 3mm;
+  background: white;
+  color: #18283c;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  break-inside: avoid;
+}
+.card .foreign { font-size: 20pt; }
+.card .jp { font-size: 10pt; margin-top: 3mm; }
+.card .reading { font-size: 10pt; margin-top: 2mm; }
+.card .meaning { font-size: 9pt; margin-top: 2mm; }
+footer { text-align: center; padding: 18px; color: #637187; }
+@media print {
+  @page { size: 91mm 55mm; margin: 0; }
+  body { background: white; }
+  body * { visibility: hidden; }
+  #printArea, #printArea * { visibility: visible; }
+  #printArea {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 91mm;
+  }
+  .card {
+    width: 91mm;
+    height: 55mm;
+    border: none;
+    border-radius: 0;
+    page-break-after: always;
+  }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Kotoba-CommunicationAsobi</h1>
+  <p>日本語から世界の言葉へ — 多言語検索・会話カード</p>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>🔎 言葉を検索</h2>
+    <label for="word">日本語の言葉・表現</label>
+    <input id="word" placeholder="例：こんにちは、ありがとう、すみません">
+    <div class="muted">検索サンプル：こんにちは／ありがとう／すみません／おはよう／さようなら</div>
+
+    <h3>表示する言語</h3>
+    <div class="languages">
+      <label><input type="checkbox" value="en" checked> 英語</label>
+      <label><input type="checkbox" value="zh" checked> 中国語</label>
+      <label><input type="checkbox" value="ko" checked> 韓国語</label>
+      <label><input type="checkbox" value="fr"> フランス語</label>
+      <label><input type="checkbox" value="es"> スペイン語</label>
+    </div>
+    <button onclick="searchWord()">検索する</button>
+  </section>
+
+  <section class="panel">
+    <h2>📖 検索結果</h2>
+    <div id="results">日本語を入力して検索してください。</div>
+    <div class="actions">
+      <button onclick="printCards()">カードを印刷</button>
+      <button class="secondary" onclick="saveResults()">結果を保存</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>🕘 検索履歴</h2>
+    <div id="history"></div>
+    <button class="secondary" onclick="clearHistory()">履歴を削除</button>
+  </section>
+
+  <div id="printArea"></div>
+</main>
+<footer>多言語データベース — 試作版</footer>
+
+<script>
+const dictionary = {
+  "こんにちは": {
+    en: ["Hello", "ハロー", "こんにちは"],
+    zh: ["你好", "Nǐ hǎo", "こんにちは"],
+    ko: ["안녕하세요", "アンニョンハセヨ", "こんにちは"],
+    fr: ["Bonjour", "ボンジュール", "こんにちは"],
+    es: ["Hola", "オラ", "こんにちは"]
+  },
+  "ありがとう": {
+    en: ["Thank you", "サンキュー", "ありがとう"],
+    zh: ["谢谢", "Xièxie", "ありがとう"],
+    ko: ["감사합니다", "カムサハムニダ", "ありがとうございます"],
+    fr: ["Merci", "メルシー", "ありがとう"],
+    es: ["Gracias", "グラシアス", "ありがとう"]
+  },
+  "すみません": {
+    en: ["Excuse me", "エクスキューズ ミー", "すみません"],
+    zh: ["不好意思", "Bù hǎoyìsi", "すみません"],
+    ko: ["실례합니다", "シルレハムニダ", "失礼します"],
+    fr: ["Excusez-moi", "エクスキュゼ モワ", "すみません"],
+    es: ["Disculpe", "ディスクルペ", "すみません"]
+  },
+  "おはよう": {
+    en: ["Good morning", "グッド モーニング", "おはようございます"],
+    zh: ["早上好", "Zǎoshang hǎo", "おはようございます"],
+    ko: ["좋은 아침이에요", "チョウン アチミエヨ", "おはようございます"],
+    fr: ["Bonjour", "ボンジュール", "おはようございます"],
+    es: ["Buenos días", "ブエノス ディアス", "おはようございます"]
+  },
+  "さようなら": {
+    en: ["Goodbye", "グッドバイ", "さようなら"],
+    zh: ["再见", "Zàijiàn", "さようなら"],
+    ko: ["안녕히 가세요", "アンニョンヒ カセヨ", "さようなら"],
+    fr: ["Au revoir", "オ ルヴォワール", "さようなら"],
+    es: ["Adiós", "アディオス", "さようなら"]
+  }
+};
+
+const languageNames = {
+  en: "英語", zh: "中国語（簡体字）",
+  ko: "韓国語", fr: "フランス語", es: "スペイン語"
+};
+
+let currentResults = [];
+
+function searchWord(value) {
+  const word = (typeof value === "string" ? value :
+    document.getElementById("word").value).trim();
+
+  if (!word) {
+    alert("日本語を入力してください。");
+    return;
+  }
+
+  const entries = dictionary[word];
+  const selected = [...document.querySelectorAll(
+    '.languages input:checked'
+  )].map(el => el.value);
+
+  if (!selected.length) {
+    alert("表示する言語を選んでください。");
+    return;
+  }
+
+  if (!entries) {
+    currentResults = [];
+    document.getElementById("results").innerHTML =
+      "この言葉はサンプル辞書にありません。現在は登録済みの言葉のみ検索できます。";
+    document.getElementById("printArea").innerHTML = "";
+    return;
+  }
+
+  currentResults = selected.filter(lang => entries[lang])
+    .map(lang => ({
+      word, lang, language: languageNames[lang],
+      text: entries[lang][0],
+      reading: entries[lang][1],
+      meaning: entries[lang][2]
+    }));
+
+  document.getElementById("results").innerHTML =
+    currentResults.map((item, i) => `
+      <article class="result">
+        <h3>${item.language}</h3>
+        <div class="foreign">${item.text}</div>
+        <p>読み方：${item.reading}</p>
+        <p>意味：${item.meaning}</p>
+        <button class="secondary" onclick="printOne(${i})">
+          この言葉を印刷
+        </button>
+      </article>
+    `).join("");
+
+  document.getElementById("printArea").innerHTML =
+    currentResults.map(makeCard).join("");
+
+  addHistory(word);
+}
+
+function makeCard(item) {
+  return `<div class="card">
+    <div class="muted">${item.language}</div>
+    <div class="foreign">${item.text}</div>
+    <div class="reading">読み方：${item.reading}</div>
+    <div class="meaning">意味：${item.meaning}</div>
+    <div class="jp">日本語：${item.word}</div>
+  </div>`;
+}
+
+function printCards() {
+  if (!currentResults.length) {
+    alert("先に言葉を検索してください。");
+    return;
+  }
+  document.getElementById("printArea").innerHTML =
+    currentResults.map(makeCard).join("");
+  window.print();
+}
+
+function printOne(index) {
+  const item = currentResults[index];
+  if (!item) return;
+  document.getElementById("printArea").innerHTML = makeCard(item);
+  window.print();
+}
+
+function addHistory(word) {
+  let history = JSON.parse(localStorage.getItem("kotobaHistory") || "[]");
+  history = history.filter(item => item.word !== word);
+  history.unshift({word, date: new Date().toLocaleString("ja-JP")});
+  localStorage.setItem("kotobaHistory", JSON.stringify(history.slice(0, 50)));
+  showHistory();
+}
+
+function showHistory() {
+  const history = JSON.parse(localStorage.getItem("kotobaHistory") || "[]");
+  document.getElementById("history").innerHTML = history.length
+    ? history.map(item => `
+      <div class="history-item">
+        <span>${item.word}<br><small>${item.date}</small></span>
+        <button class="secondary"
+          onclick="searchWord(${JSON.stringify(item.word)})">再検索</button>
+      </div>
+    `).join("")
+    : '<p class="muted">履歴はまだありません。</p>';
+}
+
+function saveResults() {
+  if (!currentResults.length) {
+    alert("保存する検索結果がありません。");
+    return;
+  }
+  const saved = JSON.parse(localStorage.getItem("kotobaSaved") || "[]");
+  currentResults.forEach(item => {
+    if (!saved.some(s => s.word === item.word && s.lang === item.lang)) {
+      saved.push(item);
+    }
+  });
+  localStorage.setItem("kotobaSaved", JSON.stringify(saved));
+  alert("検索結果をお気に入りデータとして保存しました。");
+}
+
+function clearHistory() {
+  if (confirm("検索履歴を削除しますか？")) {
+    localStorage.removeItem("kotobaHistory");
+    showHistory();
+  }
+}
+
+document.getElementById("word").addEventListener("keydown", e => {
+  if (e.key === "Enter") searchWord();
+});
+
+showHistory();
+</script>
+</body>
+</html>
