@@ -91,23 +91,47 @@ button.secondary { background: #e8eef5; color: #243247; }
 .card .reading { font-size: 10pt; margin-top: 2mm; }
 .card .meaning { font-size: 9pt; margin-top: 2mm; }
 footer { text-align: center; padding: 18px; color: #637187; }
+
 @media print {
-  @page { size: 91mm 55mm; margin: 0; }
-  body { background: white; }
-  body * { visibility: hidden; }
-  #printArea, #printArea * { visibility: visible; }
+  @page {
+    size: A4;
+    margin: 8mm;
+  }
+
+  body {
+    background: white;
+    margin: 0;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #printArea,
+  #printArea * {
+    visibility: visible;
+  }
+
   #printArea {
     position: absolute;
     left: 0;
     top: 0;
-    width: 91mm;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 91mm);
+    gap: 4mm;
+    align-content: start;
   }
+
   .card {
     width: 91mm;
     height: 55mm;
-    border: none;
-    border-radius: 0;
-    page-break-after: always;
+    box-sizing: border-box;
+    border: 1px solid #ccd4df;
+    border-radius: 3mm;
+    page-break-after: auto;
+    break-after: auto;
+    break-inside: avoid;
   }
 }
 </style>
