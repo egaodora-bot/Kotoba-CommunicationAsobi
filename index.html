@@ -94,45 +94,23 @@ footer { text-align: center; padding: 18px; color: #637187; }
 
 @media print {
   @page {
-    size: A4;
-    margin: 8mm;
-  }
+  size: A4 portrait;
+  margin: 8mm;
+}
 
-  body {
-    background: white;
-    margin: 0;
-  }
+#printArea {
+  display: grid;
+  grid-template-columns: repeat(2, 91mm);
+  gap: 4mm;
+  align-content: start;
+}
 
-  body * {
-    visibility: hidden;
-  }
-
-  #printArea,
-  #printArea * {
-    visibility: visible;
-  }
-
-  #printArea {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(2, 91mm);
-    gap: 4mm;
-    align-content: start;
-  }
-
-  .card {
-    width: 91mm;
-    height: 55mm;
-    box-sizing: border-box;
-    border: 1px solid #ccd4df;
-    border-radius: 3mm;
-    page-break-after: auto;
-    break-after: auto;
-    break-inside: avoid;
-  }
+.card {
+  width: 91mm;
+  height: 55mm;
+  page-break-after: auto;
+  break-after: auto;
+  break-inside: avoid;
 }
 </style>
 </head>
